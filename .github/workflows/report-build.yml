@@ -2,11 +2,21 @@ name: Report Service Build
 
 on:
   push:
+    branches:
+      - trunk
     paths:
       - 'report/**'
+    tags:
+      - 'v*'
   pull_request:
     paths:
       - 'report/**'
+  workflow_dispatch:
+    inputs:
+      simulate_tag:
+        description: 'Simulate tag (e.g., v1.0.0-test)'
+        required: false
+        default: ''
 
 jobs:
   build:
@@ -23,19 +33,26 @@ jobs:
       working-directory: ./report
       run: mvn clean install -Drevision=$(git rev-parse --short HEAD)
     - name: Login to Docker Hub
-      if: github.ref == 'refs/heads/trunk'
+      if: github.ref == 'refs/heads/trunk' || startsWith(github.ref, 'refs/tags/') || github.event.inputs.simulate_tag != ''
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKER_USER }}
         password: ${{ secrets.DOCKER_TOKEN }}
     - name: Build and Push Docker image
-      if: github.ref == 'refs/heads/trunk'
+      if: github.ref == 'refs/heads/trunk' || startsWith(github.ref, 'refs/tags/') || github.event.inputs.simulate_tag != ''
       working-directory: ./report
       run: |
         if [ -f target/restful-booker-platform-report-*-exec.jar ]; then
+          if [[ "${{ github.event.inputs.simulate_tag }}" != "" ]]; then
+            TAG="${{ github.event.inputs.simulate_tag }}"
+          elif [[ "${{ github.ref }}" == "refs/heads/trunk" ]]; then
+            TAG="latest"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG="${{ github.ref_name }}"
+          fi
           VERSION=$(ls target/restful-booker-platform-report-*-exec.jar | cut -d '-' -f 5 | cut -c1-11)
-          docker build -t mwinteringham/restfulbookerplatform_report:latest .
-          docker push mwinteringham/restfulbookerplatform_report:latest
+          docker build -t mwinteringham/restfulbookerplatform_report:$TAG .
+          docker push mwinteringham/restfulbookerplatform_report:$TAG
           echo "VERSION=$VERSION" >> $GITHUB_ENV
         else
           echo "Report JAR file not found"

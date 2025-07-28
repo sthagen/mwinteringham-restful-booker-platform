@@ -2,11 +2,21 @@ name: Auth Service Build
 
 on:
   push:
+    branches:
+      - trunk
     paths:
       - 'auth/**'
+    tags:
+      - 'v*'
   pull_request:
     paths:
       - 'auth/**'
+  workflow_dispatch:
+    inputs:
+      simulate_tag:
+        description: 'Simulate tag (e.g., v1.0.0-test)'
+        required: false
+        default: ''
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,20 +36,27 @@ jobs:
       run: mvn clean install -Drevision=$(git rev-parse --short HEAD)
 
     - name: Login to Docker Hub
-      if: github.ref == 'refs/heads/trunk'
+      if: github.ref == 'refs/heads/trunk' || startsWith(github.ref, 'refs/tags/') || github.event.inputs.simulate_tag != ''
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKER_USER }}
         password: ${{ secrets.DOCKER_TOKEN }}
 
     - name: Build and Push Docker image
-      if: github.ref == 'refs/heads/trunk'
+      if: github.ref == 'refs/heads/trunk' || startsWith(github.ref, 'refs/tags/') || github.event.inputs.simulate_tag != ''
       working-directory: ./auth
       run: |
         if [ -f target/restful-booker-platform-auth-*-exec.jar ]; then
+          if [[ "${{ github.event.inputs.simulate_tag }}" != "" ]]; then
+            TAG="${{ github.event.inputs.simulate_tag }}"
+          elif [[ "${{ github.ref }}" == "refs/heads/trunk" ]]; then
+            TAG="latest"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG="${{ github.ref_name }}"
+          fi
           VERSION=$(ls target/restful-booker-platform-auth-*-exec.jar | cut -d '-' -f 5 | cut -c1-11)
-          docker build -t mwinteringham/restfulbookerplatform_auth:latest .
-          docker push mwinteringham/restfulbookerplatform_auth:latest
+          docker build -t mwinteringham/restfulbookerplatform_auth:$TAG .
+          docker push mwinteringham/restfulbookerplatform_auth:$TAG
           echo "VERSION=$VERSION" >> $GITHUB_ENV
         else
           echo "Auth JAR file not found"
