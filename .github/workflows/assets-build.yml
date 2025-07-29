@@ -7,7 +7,7 @@ on:
     paths:
       - 'assets/**'
     tags:
-      - 'v*'
+      - '*'
   pull_request:
     paths:
       - 'assets/**'

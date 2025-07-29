@@ -7,7 +7,7 @@ on:
     paths:
       - 'branding/**'
     tags:
-      - 'v*'
+      - '*'
   pull_request:
     paths:
       - 'branding/**'

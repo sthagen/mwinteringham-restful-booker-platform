@@ -4,7 +4,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.openqa.selenium.Cookie;
 import org.openqa.selenium.WebDriver;
 
+import java.time.Duration;
+import java.time.temporal.TemporalUnit;
 import java.util.concurrent.TimeUnit;
+
+import static java.time.temporal.ChronoUnit.SECONDS;
 
 public class TestSetup {
 
@@ -13,7 +17,7 @@ public class TestSetup {
     @BeforeEach
     public void SetUp(){
         driver = new DriverFactory().create();
-        driver.manage().timeouts().implicitlyWait(2, TimeUnit.SECONDS);
+        driver.manage().timeouts().implicitlyWait(Duration.of(2, SECONDS));
     }
 
     @AfterEach

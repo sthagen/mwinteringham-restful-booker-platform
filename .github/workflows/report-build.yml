@@ -7,7 +7,7 @@ on:
     paths:
       - 'report/**'
     tags:
-      - 'v*'
+      - '*'
   pull_request:
     paths:
       - 'report/**'

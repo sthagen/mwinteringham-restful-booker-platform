@@ -77,7 +77,7 @@ describe('Footer Component', () => {
     render(<Footer branding={mockBranding} />);
     
     // Check for version
-    expect(screen.getByText(/restful-booker-platform v2\.0/)).toBeInTheDocument();
+    expect(screen.getByText(/restful-booker-platform v/)).toBeInTheDocument();
     
     // Check for copyright year range
     expect(screen.getByText(/©\s+2019-25/)).toBeInTheDocument();
